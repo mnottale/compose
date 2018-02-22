@@ -39,6 +39,7 @@ from .sort_services import sort_service_dicts
 from .types import MountSpec
 from .types import parse_extra_hosts
 from .types import parse_restart_spec
+from .types import SecurityOpt
 from .types import ServiceLink
 from .types import ServicePort
 from .types import VolumeFromSpec
@@ -729,9 +730,9 @@ def process_service(service_config):
         if field in service_dict:
             service_dict[field] = to_list(service_dict[field])
 
-    service_dict = process_blkio_config(process_ports(
+    service_dict = process_security_opt(process_blkio_config(process_ports(
         process_healthcheck(service_dict)
-    ))
+    )))
 
     return service_dict
 
@@ -1299,6 +1300,16 @@ def split_path_mapping(volume_path):
         return (container_drive + container_path, (drive + host, mode))
     else:
         return (volume_path, None)
+
+
+def process_security_opt(service_dict):
+    security_opts = service_dict.get('security_opt', [])
+    result = []
+    for value in security_opts:
+        result.append(SecurityOpt.parse(value))
+    if result:
+        service_dict['security_opt'] = result
+    return service_dict
 
 
 def join_path_mapping(pair):
